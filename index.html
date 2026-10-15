@@ -152,12 +152,21 @@
         }
 
         .shop-modal h3 {
-            margin: 0 0 6px 0;
+            margin: 0 0 4px 0;
             color: #ffd700;
             font-size: 13px;
             text-align: center;
-            border-bottom: 1px dashed #b58450;
-            padding-bottom: 4px;
+        }
+
+        .shop-notice {
+            background: #451a03;
+            border: 1px dashed #f59e0b;
+            color: #fef08a;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 8px;
         }
 
         .shop-card {
@@ -325,13 +334,14 @@
 
     <div class="shop-modal" id="shopModal">
         <h3>🛍️ TIỆM NÂNG CẤP VƯƠNG QUỐC ĐỎ</h3>
+        <div class="shop-notice">⚠️ <b>Cảnh báo:</b> Trả lời sai khi nâng cấp sẽ vẫn bị **mất tài nguyên** và không nhận được trang bị!</div>
         
         <div class="shop-card">
             <div class="shop-info">
                 💪 <b>Đầu Gắp Kiên Cố</b> (Cấp <span id="lblClawLvl">1</span>)<br>
                 Giá: <span id="lblClawGold">40</span>🪙 | <span id="lblClawSoul">2</span>❤️ | <span id="lblClawBrick">2</span>🧱
             </div>
-            <button class="btn-shop" onclick="buyClawUpgrade()">Nâng cấp</button>
+            <button class="btn-shop" onclick="attemptUpgrade('claw')">Nâng cấp</button>
         </div>
 
         <div class="shop-card">
@@ -339,7 +349,7 @@
                 📏 <b>Độ Dài Dây Cáp</b> (Cấp <span id="lblCableLenLvl">1</span>)<br>
                 Giá: <span id="lblCableLenGold">30</span>🪙 | <span id="lblCableLenSoul">1</span>❤️ | <span id="lblCableLenBrick">2</span>🧱
             </div>
-            <button class="btn-shop" onclick="buyCableLengthUpgrade()">Nâng cấp</button>
+            <button class="btn-shop" onclick="attemptUpgrade('cable_len')">Nâng cấp</button>
         </div>
 
         <div class="shop-card">
@@ -347,7 +357,7 @@
                 ⚡ <b>Tốc Độ Thu Hồi</b> (Cấp <span id="lblSpeedLvl">1</span>)<br>
                 Giá: <span id="lblSpeedGold">35</span>🪙 | <span id="lblSpeedSoul">2</span>❤️ | <span id="lblSpeedBrick">1</span>🧱
             </div>
-            <button class="btn-shop" onclick="buySpeedUpgrade()">Nâng cấp</button>
+            <button class="btn-shop" onclick="attemptUpgrade('speed')">Nâng cấp</button>
         </div>
 
         <div class="shop-card">
@@ -355,7 +365,7 @@
                 🎨 <b>Màu Sắc Dây Cáp</b> (<span id="lblCableName">Vàng Nắng</span>)<br>
                 Giá: <span id="lblCableGold">25</span>🪙 | <span id="lblCableSoul">1</span>❤️ | <span id="lblCableBrick">1</span>🧱
             </div>
-            <button class="btn-shop" onclick="buyCableColorUpgrade()">Đổi màu</button>
+            <button class="btn-shop" onclick="attemptUpgrade('cable_color')">Đổi màu</button>
         </div>
 
         <button class="close-shop" onclick="toggleShop()">Đóng Cửa Hàng</button>
@@ -381,6 +391,7 @@
                 <b>Quy tắc chơi:</b><br>
                 • Thả gàu cẩu thu thập tài nguyên quan trọng (Vàng phù sa 🪙, Hồn Gốm ❤️, Gạch nung trấu 🧱, Cuộn giấy di sản 📜...).<br>
                 • <b>Chỉ cần gắp sạch các vật phẩm di sản quan trọng</b> là qua màn, có thể bỏ qua Rong sông (🌿) và Đá ngầm (🪨).<br>
+                • Nâng cấp trang bị trong Cửa hàng bắt buộc trả lời đúng câu hỏi; trả lời sai sẽ **mất sạch tài nguyên** đã đặt mua!<br>
                 • Chinh phục trọn vẹn 3 màn chơi để phục hưng toàn bộ quần thể di sản!
             </p>
             <div class="round-stats" id="roundStatsBox">
@@ -652,6 +663,114 @@
 
     let pendingModalAction = null;
 
+    function attemptUpgrade(type) {
+        let cost = null;
+        if (type === 'claw') cost = clawCost;
+        else if (type === 'cable_len') cost = cableLenCost;
+        else if (type === 'speed') cost = speedCost;
+        else if (type === 'cable_color') cost = cableCost;
+
+        if (gold >= cost.gold && soul >= cost.soul && bricks >= cost.brick) {
+            toggleShop();
+            showQuizModalForUpgrade(type, cost);
+        } else {
+            alert(`Không đủ tài nguyên! Cần: ${cost.gold}🪙, ${cost.soul}❤️, ${cost.brick}🧱`);
+        }
+    }
+
+    function applyUpgradeLogic(type, cost) {
+        gold -= cost.gold;
+        soul -= cost.soul;
+        bricks -= cost.brick;
+
+        if (type === 'claw') {
+            clawLevel++;
+            clawCost.gold = Math.round(clawCost.gold * 1.5);
+            clawCost.soul = Math.round(clawCost.soul * 1.4) + 1;
+            clawCost.brick = Math.round(clawCost.brick * 1.4) + 1;
+            document.getElementById('loreTitle').innerText = "💪 Nâng cấp cẩu thành công!";
+            document.getElementById('loreDesc').innerText = `Đầu gắp lên cấp ${clawLevel}, lực kéo vật nặng cải thiện mạnh mẽ!`;
+        } else if (type === 'cable_len') {
+            cableLenLevel++;
+            maxReachDepth += 45;
+            cableLenCost.gold = Math.round(cableLenCost.gold * 1.6);
+            cableLenCost.soul = Math.round(cableLenCost.soul * 1.4) + 1;
+            cableLenCost.brick = Math.round(cableLenCost.brick * 1.4) + 1;
+            document.getElementById('loreTitle').innerText = "📏 Nâng cấp độ dài dây cáp thành công!";
+            document.getElementById('loreDesc').innerText = `Dây cáp vươn xa thêm +45m dưới lòng sông!`;
+        } else if (type === 'speed') {
+            speedLevel++;
+            pullSpeedBonus += 1.5;
+            speedCost.gold = Math.round(speedCost.gold * 1.5);
+            speedCost.soul = Math.round(speedCost.soul * 1.4) + 1;
+            speedCost.brick = Math.round(speedCost.brick * 1.4) + 1;
+            document.getElementById('loreTitle').innerText = "⚡ Tăng tốc độ thu hồi thành công!";
+            document.getElementById('loreDesc').innerText = `Tốc độ cấp ${speedLevel}: Gàu cẩu thu hồi nhanh hơn rõ rệt!`;
+        } else if (type === 'cable_color') {
+            cableColorIndex = (cableColorIndex + 1) % cableThemes.length;
+            cableCost.gold = Math.round(cableCost.gold * 1.3);
+            cableCost.soul = Math.round(cableCost.soul * 1.3) + 1;
+            cableCost.brick = Math.round(cableCost.brick * 1.3) + 1;
+            document.getElementById('loreTitle').innerText = "🎨 Đổi màu cáp thành công!";
+            document.getElementById('loreDesc').innerText = `Đã đổi màu cáp sang: ${cableThemes[cableColorIndex].name}!`;
+        }
+
+        updateDashboard();
+    }
+
+    function showQuizModalForUpgrade(type, cost) {
+        const modal = document.getElementById('roundModal');
+        const title = document.getElementById('modalTitle');
+        const desc = document.getElementById('modalDesc');
+        const statsBox = document.getElementById('roundStatsBox');
+        const quizBox = document.getElementById('quizOptionsBox');
+        const btn = document.getElementById('btnNextRound');
+
+        statsBox.style.display = 'none';
+        btn.style.display = 'none';
+        quizBox.innerHTML = '';
+        quizBox.style.display = 'flex';
+
+        const qObj = getUniqueQuiz();
+
+        title.innerText = `🧠 THỬ THÁCH TRI THỨC DI SẢN MANG THÍT`;
+        desc.innerText = `Bạn đang thực hiện nâng cấp trang bị! Hãy trả lời ĐÚNG câu hỏi dưới đây để mở khóa nâng cấp (Trả lời sai sẽ mất tài nguyên):\n\n"${qObj.q}"`;
+
+        qObj.options.forEach((optText, index) => {
+            let optBtn = document.createElement('button');
+            optBtn.className = 'btn-quiz';
+            optBtn.innerText = optText;
+            optBtn.onclick = function() {
+                quizBox.style.display = 'none';
+                if (index === qObj.correct) {
+                    applyUpgradeLogic(type, cost);
+                    desc.innerText = `✅ XÁC NHẬN CHÍNH XÁC!\n\n${qObj.explanation}\n\n🎉 Bạn đã nâng cấp thành công và nhận thưởng thêm +20🪙 Vàng kích lệ!`;
+                    gold += 20;
+                    updateDashboard();
+                } else {
+                    // TRỪ TÀI NGUYÊN KHI TRẢ LỜI SAI
+                    gold -= cost.gold;
+                    soul -= cost.soul;
+                    bricks -= cost.brick;
+                    gold = Math.max(0, gold);
+                    soul = Math.max(0, soul);
+                    bricks = Math.max(0, bricks);
+                    updateDashboard();
+
+                    desc.innerText = `❌ RẤT TIẾC, ĐÁP ÁN CHƯA ĐÚNG!\n\n${qObj.explanation}\n\n💥 Bạn đã trả lời sai và bị TRỪ SẠCH số tài nguyên dùng để nâng cấp (${cost.gold}🪙, ${cost.soul}❤️, ${cost.brick}🧱)!`;
+                }
+                btn.style.display = 'block';
+                btn.innerText = '✔️ TIẾP TỤC TRÒ CHƠI';
+                pendingModalAction = () => {
+                    modal.style.display = 'none';
+                };
+            };
+            quizBox.appendChild(optBtn);
+        });
+
+        modal.style.display = 'flex';
+    }
+
     function handleModalAction() {
         if (pendingModalAction) {
             pendingModalAction();
@@ -723,128 +842,6 @@
         }
 
         modal.style.display = 'flex';
-    }
-
-    function buyCableLengthUpgrade() {
-        if (gold >= cableLenCost.gold && soul >= cableLenCost.soul && bricks >= cableLenCost.brick) {
-            gold -= cableLenCost.gold;
-            soul -= cableLenCost.soul;
-            bricks -= cableLenCost.brick;
-
-            cableLenLevel++;
-            maxReachDepth += 45;
-            cableLenCost.gold = Math.round(cableLenCost.gold * 1.6);
-            cableLenCost.soul = Math.round(cableLenCost.soul * 1.4) + 1;
-            cableLenCost.brick = Math.round(cableLenCost.brick * 1.4) + 1;
-
-            toggleShop();
-            showQuizModal();
-        } else {
-            alert(`Không đủ tài nguyên! Cần: ${cableLenCost.gold}🪙, ${cableLenCost.soul}❤️, ${cableLenCost.brick}🧱`);
-        }
-    }
-
-    function showQuizModal() {
-        const modal = document.getElementById('roundModal');
-        const title = document.getElementById('modalTitle');
-        const desc = document.getElementById('modalDesc');
-        const statsBox = document.getElementById('roundStatsBox');
-        const quizBox = document.getElementById('quizOptionsBox');
-        const btn = document.getElementById('btnNextRound');
-
-        statsBox.style.display = 'none';
-        btn.style.display = 'none';
-        quizBox.innerHTML = '';
-        quizBox.style.display = 'flex';
-
-        const qObj = getUniqueQuiz();
-
-        title.innerText = `🧠 THỬ THÁCH TRI THỨC DI SẢN MANG THÍT`;
-        desc.innerText = `Bạn vừa nâng cấp Cáp cấp ${cableLenLevel}! Hãy trả lời đúng câu hỏi dưới đây để nhận thưởng thêm +50🪙 Vàng và +1❤️ Hồn Gốm: \n\n"${qObj.q}"`;
-
-        qObj.options.forEach((optText, index) => {
-            let optBtn = document.createElement('button');
-            optBtn.className = 'btn-quiz';
-            optBtn.innerText = optText;
-            optBtn.onclick = function() {
-                quizBox.style.display = 'none';
-                if (index === qObj.correct) {
-                    gold += 50;
-                    soul += 1;
-                    desc.innerText = `✅ CHÍNH XÁC!\n\n${qObj.explanation}\n\n🎁 Phần thưởng: +50🪙 Vàng & +1❤️ Hồn Gốm đã được cộng vào tài khoản!`;
-                } else {
-                    gold = Math.max(0, gold - 10);
-                    desc.innerText = `❌ RẤT TIẾC, ĐÁP ÁN CHƯA ĐÚNG!\n\n${qObj.explanation}\n\n📉 Bạn bị trừ nhẹ 10🪙 Vàng, nhưng cáp vẫn được nâng cấp thành công!`;
-                }
-                updateDashboard();
-                btn.style.display = 'block';
-                btn.innerText = '✔️ TIẾP TỤC KHÁM PHÁ';
-                pendingModalAction = () => {
-                    modal.style.display = 'none';
-                };
-            };
-            quizBox.appendChild(optBtn);
-        });
-
-        modal.style.display = 'flex';
-    }
-
-    function buyClawUpgrade() {
-        if (gold >= clawCost.gold && soul >= clawCost.soul && bricks >= clawCost.brick) {
-            gold -= clawCost.gold;
-            soul -= clawCost.soul;
-            bricks -= clawCost.brick;
-
-            clawLevel++;
-            clawCost.gold = Math.round(clawCost.gold * 1.5);
-            clawCost.soul = Math.round(clawCost.soul * 1.4) + 1;
-            clawCost.brick = Math.round(clawCost.brick * 1.4) + 1;
-
-            updateDashboard();
-            document.getElementById('loreTitle').innerText = "💪 Nâng cấp cẩu thành công!";
-            document.getElementById('loreDesc').innerText = `Đầu gắp lên cấp ${clawLevel}, lực kéo vật nặng cải thiện mạnh mẽ!`;
-        } else {
-            alert(`Không đủ tài nguyên! Cần: ${clawCost.gold}🪙, ${clawCost.soul}❤️, ${clawCost.brick}🧱`);
-        }
-    }
-
-    function buySpeedUpgrade() {
-        if (gold >= speedCost.gold && soul >= speedCost.soul && bricks >= speedCost.brick) {
-            gold -= speedCost.gold;
-            soul -= speedCost.soul;
-            bricks -= speedCost.brick;
-
-            speedLevel++;
-            pullSpeedBonus += 1.5;
-            speedCost.gold = Math.round(speedCost.gold * 1.5);
-            speedCost.soul = Math.round(speedCost.soul * 1.4) + 1;
-            speedCost.brick = Math.round(speedCost.brick * 1.4) + 1;
-
-            updateDashboard();
-            document.getElementById('loreTitle').innerText = "⚡ Tăng tốc độ thu hồi thành công!";
-            document.getElementById('loreDesc').innerText = `Tốc độ cấp ${speedLevel}: Gàu cẩu thu hồi nhanh hơn rõ rệt!`;
-        } else {
-            alert(`Không đủ tài nguyên! Cần: ${speedCost.gold}🪙, ${speedCost.soul}❤️, ${speedCost.brick}🧱`);
-        }
-    }
-
-    function buyCableColorUpgrade() {
-        if (gold >= cableCost.gold && soul >= cableCost.soul && bricks >= cableCost.brick) {
-            gold -= cableCost.gold;
-            soul -= cableCost.soul;
-            bricks -= cableCost.brick;
-
-            cableColorIndex = (cableColorIndex + 1) % cableThemes.length;
-            cableCost.gold = Math.round(cableCost.gold * 1.3);
-            cableCost.soul = Math.round(cableCost.soul * 1.3) + 1;
-            cableCost.brick = Math.round(cableCost.brick * 1.3) + 1;
-
-            updateDashboard();
-            document.getElementById('loreTitle').innerText = "🎨 Đổi màu cáp thành công!";
-            document.getElementById('loreDesc').innerText = `Đã đổi màu cáp sang: ${cableThemes[cableColorIndex].name}!`;
-        } else {
-            alert(`Không đủ tài nguyên! Cần: ${cableCost.gold}🪙, ${cableCost.soul}❤️, ${cableCost.brick}🧱`);
-        }
     }
 
     function updateGame() {
